@@ -1,5 +1,4 @@
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
-const qrcode = require('qrcode-terminal');
 const express = require('express');
 const app = express();
 app.use(express.json());
@@ -9,19 +8,14 @@ let sock;
 async function connectToWhatsApp() {
     const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
     sock = makeWASocket({
-        auth: state
+        auth: state,
+        printQRInTerminal: false
     });
 
     sock.ev.on('creds.update', saveCreds);
 
     sock.ev.on('connection.update', (update) => {
-        const { connection, lastDisconnect, qr } = update;
-        
-        if (qr) {
-            console.log("=== SCAN THIS QR CODE WITH WHATSAPP ===");
-            qrcode.generate(qr, { small: true });
-        }
-
+        const { connection, lastDisconnect } = update;
         if (connection === 'close') {
             const shouldReconnect = (lastDisconnect.error)?.output?.statusCode !== DisconnectReason.loggedOut;
             if (shouldReconnect) connectToWhatsApp();
@@ -29,6 +23,18 @@ async function connectToWhatsApp() {
             console.log('WhatsApp connection opened successfully!');
         }
     });
+
+    // Request Pairing Code using your phone number
+    if (!sock.authState.creds.registered) {
+        setTimeout(async () => {
+            // Yahan apna WhatsApp mobile number country code (+91) ke sath daalein
+            const phoneNumber = "918928082194"; 
+            const code = await sock.requestPairingCode(phoneNumber);
+            console.log("====================================");
+            console.log(`YOUR WHATSAPP PAIRING CODE: ${code}`);
+            console.log("====================================");
+        }, 3000);
+    }
 }
 
 connectToWhatsApp();
