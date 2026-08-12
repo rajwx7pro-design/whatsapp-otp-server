@@ -10,7 +10,7 @@ async function connectToWhatsApp() {
     sock = makeWASocket({
         auth: state,
         printQRInTerminal: false,
-        syncFullHistory: false // <--- Is line se purani chat sync error aana band ho jayega
+        syncFullHistory: false // Unnecessary history sync error fix karne ke liye
     });
 
     sock.ev.on('creds.update', saveCreds);
@@ -25,9 +25,10 @@ async function connectToWhatsApp() {
         }
     });
 
+    // Request Pairing Code using your phone number if not registered
     if (!sock.authState.creds.registered) {
         setTimeout(async () => {
-            const phoneNumber = "918928082194"; 
+            const phoneNumber = "918928082194"; // Apna WhatsApp number
             const code = await sock.requestPairingCode(phoneNumber);
             console.log("====================================");
             console.log(`YOUR WHATSAPP PAIRING CODE: ${code}`);
